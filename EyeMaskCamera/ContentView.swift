@@ -8,6 +8,7 @@
 import SwiftUI
 import AVFoundation
 import Vision
+import CoreImage.CIFilterBuiltins
 
 extension AVCaptureDevice.Position: CaseIterable {
     public static var allCases: [AVCaptureDevice.Position] {
@@ -101,93 +102,119 @@ class EyeMaskCamera: NSObject, AVCapturePhotoCaptureDelegate, ObservableObject {
         // 元写真を取得
         guard let imageData = photo.fileDataRepresentation(), let ciImage = CIImage(data: imageData) else {return}
         var photoImage = ciImage
-        
+
         // 画像の向きを決め打ち修正
         photoImage = photoImage.oriented(.right)
-        // Imageクラスでも描画されるようにCGImage経由でUIImageに変換
         let context = CIContext(options: nil)
+        
+        var faceRoll: Float?
+        var faceYaw: Float?
+        var rightEyeEdge: CGPoint?
+        var leftEyeEdge: CGPoint?
+
+        let detector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: nil)
+        let features = detector!.features(in: photoImage, options: [CIDetectorEyeBlink : true])
+        
+        print("CIFaceFeature count: ", terminator: "")
+        print(features.count)
+
+        (features as? [CIFaceFeature])?.forEach {
+            print("bounds:")
+            print($0.bounds) // yの位置が上下判定しているので注意!!
+            print("hasFaceAngle: ", terminator: "")
+            print($0.hasFaceAngle)
+            print("faceAngle: ", terminator: "")
+            faceRoll = $0.faceAngle * .pi / 180
+            print(faceRoll)
+            print("leftEyeClosed: ", terminator: "")
+            print($0.leftEyeClosed)
+            print("rightEyeClosed: ", terminator: "")
+            print($0.rightEyeClosed)
+        }
+        
         let cgImage = context.createCGImage(photoImage, from: photoImage.extent)
         
         if let cgImage = cgImage {
-            let cgContext = CGContext(
-                data: nil,
-                width: cgImage.width,
-                height: cgImage.height,
-                bitsPerComponent: cgImage.bitsPerComponent,
-                bytesPerRow: cgImage.bytesPerRow,
-                space: cgImage.colorSpace!,
-                bitmapInfo: cgImage.bitmapInfo.rawValue
-            )
-            let imageRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
-            cgContext?.draw(cgImage, in: imageRect)
-            cgContext?.setLineWidth(4.0)
-            cgContext?.setStrokeColor(UIColor.green.cgColor)
+//            let cgContext = CGContext(
+//                data: nil,
+//                width: cgImage.width,
+//                height: cgImage.height,
+//                bitsPerComponent: cgImage.bitsPerComponent,
+//                bytesPerRow: cgImage.bytesPerRow,
+//                space: cgImage.colorSpace!,
+//                bitmapInfo: cgImage.bitmapInfo.rawValue
+//            )
+//            let imageRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
+//            cgContext?.draw(cgImage, in: imageRect)
+//            cgContext?.setLineWidth(4.0)
+//            cgContext?.setStrokeColor(UIColor.green.cgColor)
             let cgSize = CGSize(width: cgImage.width, height: cgImage.height)
             print(cgSize)
             
-//            let request = VNDetectFaceRectanglesRequest { (request, error) in
             let request = VNDetectFaceLandmarksRequest { (request, error) in
                 guard let results = request.results as? [VNFaceObservation] else {
                     return
                 }
                 
+                print("VNFaceObservation count: ", terminator: "")
+                print(results.count)
+                
                 for observation in results {
-                    print(observation.boundingBox)
                     print(observation.boundingBox.converted(to: cgSize))
-                    cgContext?.stroke(observation.boundingBox.converted(to: cgSize))
-//                    print(observation.landmarks!)
-                    
-                    print("rightEyebrow:")
-//                    print(observation.landmarks?.rightEyebrow?.normalizedPoints)
-                    print(observation.landmarks?.rightEyebrow?.pointsInImage(imageSize: cgSize))
-                    print("leftEyebrow:")
-//                    print(observation.landmarks?.leftEyebrow?.normalizedPoints)
-                    print(observation.landmarks?.leftEyebrow?.pointsInImage(imageSize: cgSize))
-
-                    cgContext?.setStrokeColor(UIColor.blue.cgColor)
-                    cgContext?.addLines(between: (observation.landmarks?.leftEyebrow?.pointsInImage(imageSize: cgSize))!)
-                    cgContext?.addLines(between: (observation.landmarks?.rightEyebrow?.pointsInImage(imageSize: cgSize))!)
-                    cgContext?.strokePath()
-                    
+                    rightEyeEdge = observation.landmarks?.rightEye?.pointsInImage(imageSize: cgSize).first
+                    leftEyeEdge = observation.landmarks?.leftEye?.pointsInImage(imageSize: cgSize).first
                     print("rightEye:")
-//                    print(observation.landmarks?.rightEye?.normalizedPoints)
-                    print(observation.landmarks?.rightEye?.pointsInImage(imageSize: cgSize))
+                    print(rightEyeEdge)
                     print("leftEye:")
-//                    print(observation.landmarks?.leftEye?.normalizedPoints)
-                    print(observation.landmarks?.leftEye?.pointsInImage(imageSize: cgSize))
+                    print(leftEyeEdge)
 
-                    cgContext?.setStrokeColor(UIColor.red.cgColor)
-                    cgContext?.addLines(between: (observation.landmarks?.leftEye?.pointsInImage(imageSize: cgSize))!)
-                    cgContext?.addLines(between: (observation.landmarks?.rightEye?.pointsInImage(imageSize: cgSize))!)
-                    cgContext?.strokePath()
-                    
                     print("angle:")
-                    print(observation.roll!)
-                    print(observation.yaw!)
-                    
-//                    let landmarkReauest = VNDetectFaceLandmarksRequest { (request, error) in
-//                        guard let results = request.results as? [VNFaceObservation] else {
-//                            return
-//                        }
-//
-//                        print(results.count)
-//
-//                        for observation in results {
-//                            print(observation.landmarks)
-//                        }
-//                    }
-//
-//                    landmarkReauest.inputFaceObservations = [observation]
-//                    let landmarkHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-//                    try? landmarkHandler.perform([landmarkReauest])
+                    print(Float(observation.roll!) * 180 / .pi)
+                    faceYaw = Float(observation.yaw!)
+                    print(faceYaw! * 180 / .pi)
+                    // pitchはiOS15から
+                    // Betaで試してみたが角度が計算されない
+//                    print(Float(observation.pitch!) * 180 / .pi)
                 }
             }
             
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
             try? handler.perform([request])
             
-            let newImage = cgContext?.makeImage()
-//            self.image = UIImage(cgImage: cgImage)
+            let maskColor = CIColor(red: 1, green: 0, blue: 1, alpha: 0.5)
+            // アイマスクの縦横比は適当に決定
+            let maskSize = CGRect(x: 0, y: 0, width: 1000, height: 300)
+            let maskBase  = CIImage(color: maskColor).cropped(to: maskSize)
+            let maskFIlter = CIFilter.perspectiveRotate()
+            maskFIlter.inputImage = maskBase
+            maskFIlter.roll = faceRoll!
+            maskFIlter.yaw = faceYaw!
+            // 焦点距離も動かしながら適当に決定
+            maskFIlter.focalLength = 68
+            let maskImage = maskFIlter.outputImage!
+            
+            let eyeDistance = abs(rightEyeEdge!.x - leftEyeEdge!.x)
+            let maskWidth = maskImage.extent.width
+            let scale = Float(eyeDistance / maskWidth)
+            
+            let eyeScale:Float = 1.25
+            let scaleFilter = CIFilter.lanczosScaleTransform()
+            scaleFilter.inputImage = maskImage
+            scaleFilter.scale = scale * eyeScale
+            let scaleImage = scaleFilter.outputImage!
+            
+            let translateX = (rightEyeEdge!.x + leftEyeEdge!.x)/2 - (scaleImage.extent.maxX + scaleImage.extent.minX)/2
+            let transLateY = (rightEyeEdge!.y + leftEyeEdge!.y)/2 - (scaleImage.extent.maxY + scaleImage.extent.minY)/2
+            let translate = CGAffineTransform(translationX: translateX, y: transLateY)
+            let movedMask = scaleImage.transformed(by: translate)
+
+            let compositeFilter = CIFilter.sourceOverCompositing()
+            compositeFilter.inputImage = movedMask
+            compositeFilter.backgroundImage = photoImage
+            let maskedImage = compositeFilter.outputImage!
+            let newImage = context.createCGImage(maskedImage, from: maskedImage.extent)
+
+            // Imageクラスでも描画されるようにCGImage経由でUIImageに変換
             self.image = UIImage(cgImage: newImage!)
         }
     }

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C6C93FCD2624433E00C89D8F /* VisionTestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C93FCC2624433E00C89D8F /* VisionTestApp.swift */; };
+		C6C93FCD2624433E00C89D8F /* EyeMaskCameraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C93FCC2624433E00C89D8F /* EyeMaskCameraApp.swift */; };
 		C6C93FCF2624433E00C89D8F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C93FCE2624433E00C89D8F /* ContentView.swift */; };
 		C6C93FD12624433F00C89D8F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C6C93FD02624433F00C89D8F /* Assets.xcassets */; };
 		C6C93FD42624433F00C89D8F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C6C93FD32624433F00C89D8F /* Preview Assets.xcassets */; };
@@ -15,7 +15,7 @@
 
 /* Begin PBXFileReference section */
 		C6C93FC92624433E00C89D8F /* EyeMaskCamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EyeMaskCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C6C93FCC2624433E00C89D8F /* VisionTestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionTestApp.swift; sourceTree = "<group>"; };
+		C6C93FCC2624433E00C89D8F /* EyeMaskCameraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EyeMaskCameraApp.swift; sourceTree = "<group>"; };
 		C6C93FCE2624433E00C89D8F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C6C93FD02624433F00C89D8F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C6C93FD32624433F00C89D8F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -52,7 +52,7 @@
 		C6C93FCB2624433E00C89D8F /* EyeMaskCamera */ = {
 			isa = PBXGroup;
 			children = (
-				C6C93FCC2624433E00C89D8F /* VisionTestApp.swift */,
+				C6C93FCC2624433E00C89D8F /* EyeMaskCameraApp.swift */,
 				C6C93FCE2624433E00C89D8F /* ContentView.swift */,
 				C6C93FD02624433F00C89D8F /* Assets.xcassets */,
 				C6C93FD52624433F00C89D8F /* Info.plist */,
@@ -139,7 +139,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C6C93FCF2624433E00C89D8F /* ContentView.swift in Sources */,
-				C6C93FCD2624433E00C89D8F /* VisionTestApp.swift in Sources */,
+				C6C93FCD2624433E00C89D8F /* EyeMaskCameraApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
